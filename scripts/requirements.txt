@@ -1,0 +1,6 @@
+torch
+torchvision==0.20.0
+lmdb
+fastapi[standard]
+streamlit
+pillow
