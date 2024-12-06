@@ -10,7 +10,7 @@ from pydantic import BaseModel
 app = FastAPI()
 
 # Configuration
-MODEL_PATH = os.getenv("MODEL_PATH", "./output/netG_epoch_0.pth")
+MODEL_PATH = os.getenv("MODEL_PATH", "./output/netG_epoch_4.pth")
 LATENT_VECTOR_SIZE = int(os.getenv("LATENT_VECTOR_SIZE", 100))
 
 
