@@ -8,7 +8,7 @@ import os
 app = FastAPI()
 
 # Load environment variables
-MODEL_PATH = os.getenv("MODEL_PATH", "./output/generator_epoch_20.pth")
+MODEL_PATH = os.getenv("MODEL_PATH", "./output/generator_epoch_300.pth")
 OUTPUT_DIR = os.getenv("OUTPUT_DIR", "./output")
 INPUT_NC = int(os.getenv("INPUT_NC", 3))
 OUTPUT_NC = int(os.getenv("OUTPUT_NC", 3))
