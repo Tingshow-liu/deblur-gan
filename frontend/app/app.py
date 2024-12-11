@@ -47,5 +47,16 @@ if uploaded_file is not None:
                     deblurred_image, caption="Deblurred Image", use_container_width=True
                 )
 
+                # Provide a download link
+                buffered_output = io.BytesIO()
+                deblurred_image.save(buffered_output, format="PNG")
+                buffered_output.seek(0)
+                st.download_button(
+                    label="Download Deblurred Image",
+                    data=buffered_output,
+                    file_name="deblurred_image.png",
+                    mime="image/png",
+                )
+
             except requests.exceptions.RequestException as e:
                 st.error(f"An error occurred: {e}")
