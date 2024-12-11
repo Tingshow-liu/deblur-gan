@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: deblurgan-frontend
+    labels:
+        app: deblurgan-frontend
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: deblurgan-frontend
+    template:
+        metadata:
+            labels:
+                app: deblurgan-frontend
+        spec:
+            containers:
+                - name: deblurgan-frontend
+                  image: gcr.io/infinite-loader-292503/deblurgan-frontend:latest
+                  ports:
+                      - containerPort: 8501
+                  env:
+                      - name: API_URL
+                        value: "http://deblurgan-backend:8000/deblur/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: deblurgan-frontend
+spec:
+    selector:
+        app: deblurgan-frontend
+    ports:
+        - protocol: TCP
+          port: 8501
+          targetPort: 8501
+    type: LoadBalancer

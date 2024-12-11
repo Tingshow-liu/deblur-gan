@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: deblurgan-backend
+    labels:
+        app: deblurgan-backend
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: deblurgan-backend
+    template:
+        metadata:
+            labels:
+                app: deblurgan-backend
+        spec:
+            containers:
+                - name: deblurgan-backend
+                  image: gcr.io/infinite-loader-292503/deblurgan-backend:latest
+                  ports:
+                      - containerPort: 8000
+                  env:
+                      - name: MODEL_PATH
+                        value: "/app/model/generator_epoch_220.pth"
+                      - name: OUTPUT_DIR
+                        value: "/app/output"
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: deblurgan-backend
+spec:
+    selector:
+        app: deblurgan-backend
+    ports:
+        - protocol: TCP
+          port: 8000
+          targetPort: 8000
+    type: ClusterIP
