@@ -44,3 +44,29 @@ Launch frontend
 streamlit run scripts/frontend.py
 
 ```
+
+## Docker
+
+```
+docker build -t deblurgan-backend:latest ./backend
+docker build -t deblurgan-frontend:latest ./frontend
+```
+
+```
+docker run -d \
+  --name deblurgan-backend \
+  --network deblurgan-network \
+  -p 8000:8000 \
+  deblurgan-backend:latest
+
+```
+
+```
+docker run -d \
+  --name deblurgan-frontend \
+  --network deblurgan-network \
+  -p 8501:8501 \
+  -e API_URL=http://deblurgan-backend:8000/deblur/ \
+  deblurgan-frontend:latest
+
+```
