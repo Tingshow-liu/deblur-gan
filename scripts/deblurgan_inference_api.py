@@ -132,7 +132,6 @@ def load_model():
 async def deblur_image(file: UploadFile = File(...)):
     """Endpoint to deblur an input image."""
     try:
-        # Load and preprocess the input image
         image = Image.open(file.file).convert("RGB")
         image = ImageOps.exif_transpose(image)  # Fix orientation based on EXIF
 
@@ -152,7 +151,6 @@ async def deblur_image(file: UploadFile = File(...)):
         )
         input_tensor = transform(image).unsqueeze(0).to(device)  # Add batch dimension
 
-        # Perform inference
         with torch.no_grad():
             output_tensor = model(input_tensor)
 
@@ -163,7 +161,6 @@ async def deblur_image(file: UploadFile = File(...)):
         output_tensor = denormalize(output_tensor.squeeze(0).cpu())
         output_image = transforms.ToPILImage()(output_tensor)
 
-        # Save the deblurred image
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         output_path = os.path.join(OUTPUT_DIR, deblurred_filename)
         output_image.save(output_path)
@@ -172,48 +169,6 @@ async def deblur_image(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
-
-
-# @app.post("/deblur/")
-# async def deblur_image(file: UploadFile = File(...)):
-#     """Endpoint to deblur an input image."""
-#     try:
-#         # Load and preprocess the input image
-#         image = Image.open(file.file).convert("RGB")
-#         image = ImageOps.exif_transpose(image)  # Fix orientation based on EXIF
-
-#         # Ensure transformations match the dataset
-#         transform = transforms.Compose(
-#             [
-#                 transforms.Resize((128, 128)),  # Resize to match training dataset
-#                 transforms.ToTensor(),  # Convert to tensor
-#                 transforms.Normalize(
-#                     (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
-#                 ),  # Normalize to [-1, 1]
-#             ]
-#         )
-#         input_tensor = transform(image).unsqueeze(0).to(device)  # Add batch dimension
-
-#         # Perform inference
-#         with torch.no_grad():
-#             output_tensor = model(input_tensor)
-
-#         # Denormalize for visualization
-#         denormalize = transforms.Normalize(
-#             mean=[-1, -1, -1], std=[2, 2, 2]
-#         )  # Invert the normalization
-#         output_tensor = denormalize(output_tensor.squeeze(0).cpu())
-#         output_image = transforms.ToPILImage()(output_tensor)
-
-#         # Save the deblurred image
-#         os.makedirs(OUTPUT_DIR, exist_ok=True)
-#         output_path = os.path.join(OUTPUT_DIR, "deblurred_image.png")
-#         output_image.save(output_path)
-
-#         return {"message": "Image deblurred successfully", "output_path": output_path}
-
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
 
 
 @app.get("/")
