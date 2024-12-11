@@ -1,59 +1,57 @@
 import streamlit as st
 import requests
 from PIL import Image
-import base64
 import io
 
 # Streamlit App Configuration
-st.title("DCGAN Image Generation")
-st.write("Generate images using a trained DCGAN model.")
+st.title("DeblurGAN Application")
+st.write("Upload an image to deblur it using a trained DeblurGAN model.")
 
 # API URL for Inference
-API_URL = "http://127.0.0.1:8000/generate/"
+API_URL = "http://127.0.0.1:8000/deblur/"
 
-# Backend Health Check
-st.subheader("Backend Health Check")
-try:
-    health_response = requests.get(API_URL.replace("/generate/", ""))
-    if health_response.status_code == 200:
-        st.success("Backend is running and healthy!")
-    else:
-        st.warning(f"Backend returned a non-OK status: {health_response.status_code}")
-except requests.exceptions.ConnectionError:
-    st.error("Failed to connect to the backend API. Please check if it's running.")
 
-# Image Generation Section
-st.subheader("Generate Images")
+# # Backend Health Check
+# st.subheader("Backend Health Check")
+# try:
+#     health_response = requests.get(API_URL.replace("/deblur/", ""))
+#     if health_response.status_code == 200:
+#         st.success("Backend is running and healthy!")
+#     else:
+#         st.warning(f"Backend returned a non-OK status: {health_response.status_code}")
+# except requests.exceptions.ConnectionError:
+#     st.error("Failed to connect to the backend API. Please check if it's running.")
 
-# Number of images to generate
-num_images = st.slider("Number of images to generate", 1, 10, 1)
-seed = st.number_input(
-    "Seed for reproducibility (optional)", value=None, step=1, format="%d"
-)
 
-if st.button("Generate"):
-    with st.spinner("Generating images..."):
-        try:
-            # Request payload
-            payload = {"num_images": num_images}
-            if seed:
-                payload["seed"] = int(seed)
+# Image Upload Section
+st.subheader("Upload Image")
+uploaded_file = st.file_uploader("Choose an image file", type=["png", "jpg", "jpeg"])
 
-            # Call the backend API
-            response = requests.post(API_URL, json=payload)
-            response.raise_for_status()
+if uploaded_file is not None:
+    # Display the uploaded image
+    image = Image.open(uploaded_file)
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
-            # Parse response and decode images
-            results = response.json()
-            st.success(f"Generated {len(results['images'])} images successfully!")
-            for idx, img_data in enumerate(results["images"]):
-                img_bytes = base64.b64decode(img_data)
-                image = Image.open(io.BytesIO(img_bytes))
-                st.image(
-                    image,
-                    caption=f"Generated Image {idx + 1}",
-                    use_container_width=True,  # Updated here
-                )
+    if st.button("Deblur"):
+        with st.spinner("Processing..."):
+            try:
+                # Convert the uploaded image to bytes
+                buffered = io.BytesIO()
+                image.save(buffered, format="PNG")
+                image_bytes = buffered.getvalue()
 
-        except requests.exceptions.RequestException as e:
-            st.error(f"An error occurred: {e}")
+                # Send the request to the backend
+                files = {"file": ("uploaded_image.png", image_bytes, "image/png")}
+                response = requests.post(API_URL, files=files)
+                response.raise_for_status()
+
+                # Parse the response and display the deblurred image
+                result = response.json()
+                deblurred_image_path = result["output_path"]
+
+                st.success(f"Image deblurred successfully and saved at {deblurred_image_path}!")
+                deblurred_image = Image.open(deblurred_image_path)
+                st.image(deblurred_image, caption="Deblurred Image", use_column_width=True)
+
+            except requests.exceptions.RequestException as e:
+                st.error(f"An error occurred: {e}")
