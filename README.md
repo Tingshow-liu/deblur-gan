@@ -1,56 +1,85 @@
-### Environment
+## Delopying to GKE
+
+Create a cluster:
 
 ```
-python -m venv .venv
-source .venv/bin/activate
-pip install -r scripts/requirements.txt
+gcloud container clusters create deblurgan-cluster \
+    --num-nodes=1 \
+    --zone=us-east4-a \
+    --project=infinite-loader-292503
 ```
 
-### Backend API
-
-Launch backend
+Build and push the backend image:
 
 ```
+docker build -t gcr.io/infinite-loader-292503/deblurgan-backend:latest ./backend
 
-uvicorn scripts.deblurgan_inference_api:app --host 0.0.0.0 --port 8000
-
+docker push gcr.io/infinite-loader-292503/deblurgan-backend:latest
 ```
 
-Health Check:
+Build and push the frontend image:
 
 ```
-
-curl http://127.0.0.1:8000/
-
-```
-
-Deblur image locally:
+docker build -t gcr.io/infinite-loader-292503/deblurgan-frontend:latest ./frontend
+docker push gcr.io/infinite-loader-292503/deblurgan-frontend:latest
 
 ```
 
-curl -X POST "http://127.0.0.1:8000/deblur/" \
- -H "accept: application/json" \
- -H "Content-Type: multipart/form-data" \
- -F "file=@input/103.png"
+Apply the deployment
+
+```
+kubectl apply -f k8s/backend-deployment.yaml
+```
+
+Check the pod and service status
+
+```
+kubectl get pods
+kubectl get svc
+```
+
+View logs for troubleshooting:
+
+```
+kubectl logs -l app=deblurgan-frontend
+kubectl logs -l app=deblurgan-backend
+```
+
+Access the frontend application at:
+
+```
+http://<EXTERNAL-IP>:8501
+```
+
+Delete the resources used:
+
+```
+kubectl delete -f k8s/
+```
+
+Delete the cluster
+
+```
+gcloud container clusters delete deblurgan-cluster --zone us-east4-a --project infinite-loader-292503
 
 ```
 
-### Frontend
+## Launching the application locally using Docker
 
-Launch frontend
-
-```
-
-streamlit run scripts/frontend.py
+Set up a network for communication between containers:
 
 ```
+docker create network deblurgan-network
+```
 
-## Docker
+Build the backend and frontend Docker images:
 
 ```
 docker build -t deblurgan-backend:latest ./backend
 docker build -t deblurgan-frontend:latest ./frontend
 ```
+
+Run the backend container:
 
 ```
 docker run -d \
@@ -60,6 +89,8 @@ docker run -d \
   deblurgan-backend:latest
 
 ```
+
+Run the frontend container:
 
 ```
 docker run -d \
