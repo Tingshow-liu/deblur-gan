@@ -1,3 +1,7 @@
+# GAN with Pytorch: Application to Image Deblurring
+
+Author: Youjun Chen, TingHsiu Liu
+
 ## Delopying to GKE
 
 Create a cluster:
