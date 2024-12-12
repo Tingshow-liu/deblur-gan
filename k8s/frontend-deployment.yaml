@@ -16,7 +16,7 @@ spec:
         spec:
             containers:
                 - name: deblurgan-frontend
-                  image: gcr.io/infinite-loader-292503/deblurgan-frontend:latest
+                  image: gcr.io/tl4151-gcp-project/deblurgan-frontend:latest
                   ports:
                       - containerPort: 8501
                   env:
