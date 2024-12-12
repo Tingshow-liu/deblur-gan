@@ -1,49 +1,103 @@
-### Environment
+## Delopying to GKE
+
+Create a cluster:
 
 ```
-python -m venv .venv
-source .venv/bin/activate
-pip install -r scripts/requirements.txt
+gcloud container clusters create deblurgan-cluster \
+    --num-nodes=1 \
+    --zone=us-east4-a \
+    --project=infinite-loader-292503
 ```
 
-### Training
-
--   need GPU
+Build and push the backend image:
 
 ```
-python scripts/train.py --dataset cifar10 --dataroot ./data --batchSize 64 --niter 5 --cuda
+docker build -t gcr.io/infinite-loader-292503/deblurgan-backend:latest ./backend
 
+docker push gcr.io/infinite-loader-292503/deblurgan-backend:latest
 ```
 
-### Testing
+Build and push the frontend image:
 
 ```
-python scripts/test.py --model-path ./output/netG_epoch_0.pth --output-dir ./output --num-images 16
-
-
-```
-
-### Backend API
-
-```
-uvicorn scripts.dcgan_inference_api:app --host 0.0.0.0 --port 8000
-```
-
-Health Check:
-
-```
-curl http://127.0.0.1:8000/
-```
-
-Generate image:
-
-```
-curl -X POST "http://127.0.0.1:8000/generate/" -H "Content-Type: application/json" -d '{"num_images": 10, "seed": 42}'
+docker build -t gcr.io/infinite-loader-292503/deblurgan-frontend:latest ./frontend
+docker push gcr.io/infinite-loader-292503/deblurgan-frontend:latest
 
 ```
 
-### Frontend
+Apply the deployment
 
 ```
-streamlit run scripts/frontend.py
+kubectl apply -f k8s/backend-deployment.yaml
+```
+
+Check the pod and service status
+
+```
+kubectl get pods
+kubectl get svc
+```
+
+View logs for troubleshooting:
+
+```
+kubectl logs -l app=deblurgan-frontend
+kubectl logs -l app=deblurgan-backend
+```
+
+Access the frontend application at:
+
+```
+http://<EXTERNAL-IP>:8501
+```
+
+Delete the resources used:
+
+```
+kubectl delete -f k8s/
+```
+
+Delete the cluster
+
+```
+gcloud container clusters delete deblurgan-cluster --zone us-east4-a --project infinite-loader-292503
+
+```
+
+## Launching the application locally using Docker
+
+Set up a network for communication between containers:
+
+```
+docker create network deblurgan-network
+```
+
+Build the backend and frontend Docker images:
+
+```
+docker build -t deblurgan-backend:latest ./backend
+docker build -t deblurgan-frontend:latest ./frontend
+```
+
+Run the backend container:
+
+```
+docker run -d \
+  --name deblurgan-backend \
+  --network deblurgan-network \
+  -p 8000:8000 \
+  deblurgan-backend:latest
+
+```
+
+Run the frontend container:
+
+```
+docker run -d \
+  --name deblurgan-frontend \
+  --network deblurgan-network \
+  -p 8501:8501 \
+  -e API_URL=http://deblurgan-backend:8000/deblur/ \
+  deblurgan-frontend:latest
+
 ```
